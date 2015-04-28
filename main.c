@@ -148,6 +148,7 @@ int main( const int argc, const char * const argv[] )
     { 'h', "help",              ap_no  },
     { 'l', "loose-exit-status", ap_no  },
     { 'p', "prompt",            ap_yes },
+    { 'F', "highlighter",       ap_yes },
     { 'r', "restricted",        ap_no  },
     { 's', "quiet",             ap_no  },
     { 's', "silent",            ap_no  },
@@ -173,6 +174,7 @@ int main( const int argc, const char * const argv[] )
       case 'G': traditional_ = true; break;	/* backward compatibility */
       case 'h': show_help(); return 0;
       case 'l': loose = true; break;
+      case 'F': highlighter = strdup(arg); break;
       case 'p': set_prompt( arg ); break;
       case 'r': restricted_ = true; break;
       case 's': scripted_ = true; break;

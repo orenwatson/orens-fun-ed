@@ -150,3 +150,5 @@ void set_window_lines( const int lines );
 const char * strip_escapes( const char * p );
 int window_columns( void );
 int window_lines( void );
+
+extern char * highlighter;
