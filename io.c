@@ -20,18 +20,17 @@
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
-#include <unistd.h>
-#include <sys/wait.h>
 
 #include "ed.h"
 
 
 /* print text to stdout */
-static void put_tty_line( const char * p, int len, const int gflags)
+static void put_tty_line( const char * p, int len, const int gflags )
   {
   const char escapes[] = "\a\b\f\n\r\t\v\\";
   const char escchars[] = "abfnrtv\\";
   int col = 0;
+
   if( gflags & GNP ) { printf( "%d\t", current_addr() ); col = 8; }
   while( --len >= 0 )
     {
@@ -64,51 +63,19 @@ static void put_tty_line( const char * p, int len, const int gflags)
 /* print a range of lines to stdout */
 bool display_lines( int from, const int to, const int gflags )
   {
-//  FILE *toHL, *fromHL;
-  int HLpid,fuck=1;
   line_t * const ep = search_line_node( inc_addr( to ) );
   line_t * bp = search_line_node( from );
+
   if( !from ) { set_error_msg( "Invalid address" ); return false; }
-  if( highlighter && !(gflags & GLS)){
-    int tohl_fd[2];
-    char num_buf[20];
-    pipe(tohl_fd);
-    if((HLpid=fork())){
-        close(tohl_fd[0]);
-    }else{
-        close(tohl_fd[1]);
-        dup2(tohl_fd[0],0);
-        execl(highlighter,highlighter,NULL);
-        fuck=0;
-        goto hell;
-    }
-    while( bp != ep ){
-      const char * const s = get_sbuf_line( bp );
-      if( !s ){ fuck=0; goto hell; }
-      set_current_addr( from++ );
-      if( gflags & GNP ){
-        sprintf(num_buf,"%d\t",current_addr());
-        write(tohl_fd[1],num_buf,strlen(num_buf));
-      }
-      write(tohl_fd[1],s,bp->len);
-      write(tohl_fd[1],"\n",1);
-      bp = bp->q_forw;
-    }
-    hell:
-    close(tohl_fd[1]);
-    wait(NULL);
-    return fuck;
-  }else{
   while( bp != ep )
     {
     const char * const s = get_sbuf_line( bp );
     if( !s ) return false;
     set_current_addr( from++ );
-    put_tty_line( s, bp->len, gflags);
+    put_tty_line( s, bp->len, gflags );
     bp = bp->q_forw;
     }
   return true;
-  }
   }
 
 

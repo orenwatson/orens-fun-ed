@@ -21,7 +21,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <errno.h>
 
 #include "ed.h"
 
@@ -415,7 +414,6 @@ static bool command_s( const char ** const ibufpp, int * const gflagsp,
 static bool exec_global( const char ** const ibufpp, const int gflags,
                          const bool interactive );
 
-
 /* execute the next command in command buffer; return error status */
 static int exec_command( const char ** const ibufpp, const int prev_status,
                          const bool isglobal )
@@ -433,13 +431,6 @@ static int exec_command( const char ** const ibufpp, const int prev_status,
     case 'a': if( !get_command_suffix( ibufpp, &gflags ) ) return ERR;
               if( !isglobal ) clear_undo_stack();
               if( !append_lines( ibufpp, second_addr, isglobal ) ) return ERR;
-              break;
-    case 'C': /* change directory command, added by Oren Watson */
-              if(unexpected_address(addr_cnt)) return ERR;
-              *ibufpp = skip_blanks(*ibufpp);
-              *strchr(*ibufpp,'\n')=0;
-              if(chdir(strip_escapes(*ibufpp)))
-                  { set_error_msg(strerror(errno)); return ERR; }
               break;
     case 'c': if( first_addr == 0 ) first_addr = 1;
               if( second_addr == 0 ) second_addr = 1;
@@ -469,13 +460,6 @@ static int exec_command( const char ** const ibufpp, const int prev_status,
               if( read_file( fnp[0] ? fnp : def_filename, 0 ) < 0 )
                 return ERR;
               reset_undo_state(); set_modified( false );
-              break;
-    case 'F': /* set syntax highlighter program */
-              if(unexpected_address(addr_cnt))return ERR;
-              free(highlighter);
-              *ibufpp=skip_blanks(*ibufpp);
-              *strchr(*ibufpp,'\n')=0;
-              highlighter = strdup(*ibufpp);
               break;
     case 'f': if( unexpected_address( addr_cnt ) ||
                   unexpected_command_suffix( **ibufpp ) ) return ERR;

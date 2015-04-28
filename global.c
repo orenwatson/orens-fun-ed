@@ -24,6 +24,7 @@
 
 #include "ed.h"
 
+
 static const line_t **active_list = 0;	/* list of lines active in a global command */
 static int active_size = 0;	/* size (in bytes) of active_list */
 static int active_len = 0;	/* number of lines in active_list */
@@ -84,5 +85,3 @@ void unset_active_nodes( const line_t * bp, const line_t * const ep )
     bp = bp->q_forw;
     }
   }
-
-char *highlighter=0;
