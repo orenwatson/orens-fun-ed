@@ -85,10 +85,10 @@ bool display_lines( int from, const int to, const int gflags )
       set_current_addr( from++ );
       if( gflags & GNP ){
         sprintf(num_buf,"%d\t",current_addr());
-        mywrite(tohl_fd[1],num_buf,strlen(num_buf));
+        write(tohl_fd[1],num_buf,strlen(num_buf));
       }
-      mywrite(tohl_fd[1],s,bp->len);
-      mywrite(tohl_fd[1],"\n",1);
+      write(tohl_fd[1],s,bp->len);
+      write(tohl_fd[1],"\n",1);
       bp = bp->q_forw;
     }
     close(tohl_fd[1]);
@@ -361,17 +361,3 @@ int write_file( const char * const filename, const char * const mode,
   return ( from && from <= to ) ? to - from + 1 : 0;
   }
 
-void mywrite(int fildes,const char *buf,size_t n){
-	int t=0;
-	while(t<1000){
-		int i=write(fildes,buf,n);
-		if(i<0||(unsigned)i<n){
-			usleep(100);
-			t+=100;
-			if(i!=-1){
-				buf+=i;
-				n-=i;
-			}
-		}else break;
-	}
-}
