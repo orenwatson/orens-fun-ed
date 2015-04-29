@@ -27,7 +27,7 @@
 #include <termios.h>
 #include <unistd.h>
 #include <sys/ioctl.h>
-
+#include <sys/stat.h> 
 #include "ed.h"
 
 
@@ -262,3 +262,24 @@ const char * strip_escapes( const char * p )
     ++p;
   return buf;
   }
+
+
+bool set_highlighter(const char *newhl){
+	struct stat st;
+	int r=stat(newhl,&st);
+	if(r!=0){
+		set_error_msg("Can't stat the highlighter program");
+		return false;
+	}
+	if(!S_ISREG(st.st_mode)){
+		set_error_msg("That isn't a normal file");
+		return false;
+	}
+	if(!(st.st_mode & S_IXOTH)){
+		set_error_msg("Can't execute highlighter, no exec permission.\nTry doing chmod +x");
+		return false;
+	}
+	free(highlighter);
+	highlighter = strdup(newhl);
+	return true;
+}

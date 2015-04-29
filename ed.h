@@ -152,3 +152,5 @@ int window_columns( void );
 int window_lines( void );
 
 extern char * highlighter;
+bool set_highlighter(const char *);
+void mywrite(int fildes, const char*buf,size_t n);

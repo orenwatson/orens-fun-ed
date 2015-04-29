@@ -174,7 +174,7 @@ int main( const int argc, const char * const argv[] )
       case 'G': traditional_ = true; break;	/* backward compatibility */
       case 'h': show_help(); return 0;
       case 'l': loose = true; break;
-      case 'F': highlighter = strdup(arg); break;
+      case 'F': set_highlighter(arg); break;
       case 'p': set_prompt( arg ); break;
       case 'r': restricted_ = true; break;
       case 's': scripted_ = true; break;

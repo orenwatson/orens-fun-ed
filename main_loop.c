@@ -472,10 +472,9 @@ static int exec_command( const char ** const ibufpp, const int prev_status,
               break;
     case 'F': /* set syntax highlighter program */
               if(unexpected_address(addr_cnt))return ERR;
-              free(highlighter);
               *ibufpp=skip_blanks(*ibufpp);
               *strchr(*ibufpp,'\n')=0;
-              highlighter = strdup(*ibufpp);
+              if(!set_highlighter(*ibufpp))return ERR;
               break;
     case 'f': if( unexpected_address( addr_cnt ) ||
                   unexpected_command_suffix( **ibufpp ) ) return ERR;

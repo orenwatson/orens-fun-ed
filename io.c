@@ -65,40 +65,37 @@ static void put_tty_line( const char * p, int len, const int gflags)
 bool display_lines( int from, const int to, const int gflags )
   {
 //  FILE *toHL, *fromHL;
-  int HLpid,fuck=1;
+  int HLpid;
   line_t * const ep = search_line_node( inc_addr( to ) );
   line_t * bp = search_line_node( from );
   if( !from ) { set_error_msg( "Invalid address" ); return false; }
   if( highlighter && !(gflags & GLS)){
     int tohl_fd[2];
     char num_buf[20];
-    pipe(tohl_fd);
+    if(pipe(tohl_fd))goto fail_gracefully;
     if((HLpid=fork())){
         close(tohl_fd[0]);
     }else{
         close(tohl_fd[1]);
         dup2(tohl_fd[0],0);
         execl(highlighter,highlighter,NULL);
-        fuck=0;
-        goto hell;
     }
     while( bp != ep ){
       const char * const s = get_sbuf_line( bp );
-      if( !s ){ fuck=0; goto hell; }
       set_current_addr( from++ );
       if( gflags & GNP ){
         sprintf(num_buf,"%d\t",current_addr());
-        write(tohl_fd[1],num_buf,strlen(num_buf));
+        mywrite(tohl_fd[1],num_buf,strlen(num_buf));
       }
-      write(tohl_fd[1],s,bp->len);
-      write(tohl_fd[1],"\n",1);
+      mywrite(tohl_fd[1],s,bp->len);
+      mywrite(tohl_fd[1],"\n",1);
       bp = bp->q_forw;
     }
-    hell:
     close(tohl_fd[1]);
     wait(NULL);
-    return fuck;
+    return true;
   }else{
+  fail_gracefully:
   while( bp != ep )
     {
     const char * const s = get_sbuf_line( bp );
@@ -363,3 +360,18 @@ int write_file( const char * const filename, const char * const mode,
   if( !scripted() ) fprintf( stderr, "%lu\n", size );
   return ( from && from <= to ) ? to - from + 1 : 0;
   }
+
+void mywrite(int fildes,const char *buf,size_t n){
+	int t=0;
+	while(t<1000){
+		int i=write(fildes,buf,n);
+		if(i<0||(unsigned)i<n){
+			usleep(100);
+			t+=100;
+			if(i!=-1){
+				buf+=i;
+				n-=i;
+			}
+		}else break;
+	}
+}
