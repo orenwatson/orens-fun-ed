@@ -122,6 +122,22 @@ bool append_lines( const char ** const ibufpp, const int addr,
       if( !*ibufpp ) return false;
       if( size == 0 || (*ibufpp)[size-1] != '\n' )
         { clearerr( stdin ); return ( size == 0 ); }
+	if(highlighter){
+	write(1,"\033[A",3);
+	fflush(stdout);
+	int tohl_fd[2];
+	pipe(tohl_fd);
+	if(fork()){
+		close(tohl_fd[0]);
+	}else{
+		close(tohl_fd[1]);
+		dup2(tohl_fd[0],0);
+		execl(highlighter,highlighter,NULL);
+	}
+	write(tohl_fd[1],*ibufpp,size);
+	close(tohl_fd[1]);
+	wait(NULL);
+	}
       }
     else
       {

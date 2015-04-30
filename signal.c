@@ -266,6 +266,11 @@ const char * strip_escapes( const char * p )
 
 bool set_highlighter(const char *newhl){
 	struct stat st;
+	if(*newhl==0){/*turning off highlighting*/
+		free(highlighter);
+		highlighter = 0;
+		return true;
+	}
 	int r=stat(newhl,&st);
 	if(r!=0){
 		set_error_msg("Can't stat the highlighter program");
