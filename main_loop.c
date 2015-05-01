@@ -631,7 +631,12 @@ static int exec_command( const char ** const ibufpp, const int prev_status,
                 { set_error_msg( "Can't create shell process" ); return ERR; }
               if( !scripted() ) printf( "!\n" );
               break;
-    case '\n': first_addr = 1;
+    case '\n':
+		if(addr_cnt == 0){
+			printf("\033[F\033[2K\r");
+			fflush(stdout);
+		}
+		first_addr = 1;
               if( !check_addr_range( first_addr, current_addr() +
                                      ( traditional() || !isglobal ), addr_cnt ) ||
                   !display_lines( second_addr, second_addr, 0 ) )
