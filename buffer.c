@@ -103,7 +103,6 @@ static line_t * dup_line_node( line_t * const lp )
   return p;
   }
 
-
 /* Insert text from stdin (or from command buffer if global) to after
    line n; stop when either a single period is read or EOF.
    Returns false if insertion fails. */

@@ -512,6 +512,10 @@ static int exec_command( const char ** const ibufpp, const int prev_status,
               if( !append_lines( ibufpp, second_addr - 1, isglobal ) )
                 return ERR;
               break;
+    case 'I':   /*enables line editing*/
+		if(unexpected_address(addr_cnt))return ERR;
+		hy_interaction = !hy_interaction;
+		break;
     case 'j': if( !check_addr_range( current_addr(), current_addr() + 1, addr_cnt ) ||
                   !get_command_suffix( ibufpp, &gflags ) ) return ERR;
               if( !isglobal ) clear_undo_stack();
@@ -727,7 +731,11 @@ int main_loop( const bool loose )
     if( status < 0 && verbose )
       { fprintf( stderr, "%s\n", errmsg ); fflush( stderr ); }
     if( prompt_on ) { printf( "%s", prompt_str ); fflush( stdout ); }
-    ibufp = get_tty_line( &len );
+	if(!hy_interaction){
+		ibufp = get_tty_line( &len );
+	}else{
+		ibufp = get_hyi_line( &len,prompt_on?prompt_str:"");
+	}
     if( !ibufp ) return err_status;
     if( !len )
       {

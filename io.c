@@ -22,6 +22,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/wait.h>
+#include <termios.h>
 
 #include "ed.h"
 
@@ -164,7 +165,6 @@ const char * get_tty_line( int * const sizep )
   static char * buf = 0;
   static int bufsz = 0;
   int i = 0;
-
   while( true )
     {
     const int c = getchar();
@@ -361,3 +361,53 @@ int write_file( const char * const filename, const char * const mode,
   return ( from && from <= to ) ? to - from + 1 : 0;
   }
 
+bool hy_interaction=false;
+
+char * get_hyi_line(int *const sizep,char const *prompt){
+	struct termios S,T;
+	if(tcgetattr(0,&S)){
+		hy_interaction = false;
+		return get_tty_line(sizep);
+	}
+	T = S;
+	S.c_lflag = ISIG;
+	tcsetattr(0,TCSADRAIN,&S);
+	int i = 0; /*cursor pos*/
+	int z = 0; /*size of string*/
+	int zz = 0; /*buffer size*/
+	int esc = 0;
+	char *s = 0;;
+	while(1){
+		int c = getchar();
+		reparse:
+		if(esc==2){
+			if(c=='C'){if(i<z){ i++; esc=0; }}
+			else if(c=='D'){if(0<i){ i--; esc=0; }}
+			else{ esc=0; goto reparse; }
+		}else if(c=='['&&esc==1)esc=2;
+		else if(c=='\33')esc=1;
+		else if(esc==0){
+		if(c==0x7f&&i>0){
+			memmove(s+i-1,s+i,z-i);
+			z--;
+			s[z]=0;
+			i--;
+		}else{
+			if(c=='\n')i=z;
+			resize_buffer(&s,&zz,z+2);
+			memmove(s+i+1,s+i,z-i);
+			s[i]=c;
+			z++;
+			s[z]=0;
+			i++;
+		}
+		}
+		printf("\e[2K\e[0G%s%s",prompt?prompt:"",s);
+		if(z!=i)printf("\e[%dD",z-i);
+		fflush(stdout);
+		if(c=='\n')break;
+	}
+	if(sizep)*sizep=z;
+	tcsetattr(0,TCSADRAIN,&T);
+	return s;
+}
