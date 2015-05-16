@@ -315,8 +315,7 @@ static long write_stream( FILE * const fp, int from, const int to )
     int len;
     char * p = get_sbuf_line( lp );
     if( !p ) return -1;
-    len = lp->len;
-    if( from != last_addr() || !isbinary() || !newline_added() )
+    len = lp->len;    if( from != last_addr() || !isbinary() || !newline_added() )
       p[len++] = '\n';
     size += len;
     while( --len >= 0 )
@@ -361,7 +360,7 @@ int write_file( const char * const filename, const char * const mode,
   return ( from && from <= to ) ? to - from + 1 : 0;
   }
 
-bool hy_interaction=false;
+bool hy_interaction=true;
 
 char * get_hyi_line(int *const sizep,char const *prompt){
 	struct termios S,T;
@@ -387,13 +386,14 @@ char * get_hyi_line(int *const sizep,char const *prompt){
 		}else if(c=='['&&esc==1)esc=2;
 		else if(c=='\33')esc=1;
 		else if(esc==0){
-		if(c==0x7f&&i>0){
+		if((c==0x7f||c=='\b')&&i>0){
 			memmove(s+i-1,s+i,z-i);
 			z--;
 			s[z]=0;
 			i--;
 		}else{
 			if(c=='\n')i=z;
+			else if(c<' '||c==0x7f)continue;
 			resize_buffer(&s,&zz,z+2);
 			memmove(s+i+1,s+i,z-i);
 			s[i]=c;

@@ -157,3 +157,6 @@ void mywrite(int fildes, const char*buf,size_t n);
 
 extern bool hy_interaction;
 char * get_hyi_line(int *const sizep,char const *prompt);
+
+/*deified in main_loop.c*/
+extern int promptlen;
