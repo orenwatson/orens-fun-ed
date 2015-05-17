@@ -117,7 +117,7 @@ static const char * get_shell_command( const char ** const ibufpp )
         if( !resize_buffer( &buf, &bufsz, i + 1 ) ) return 0;
         buf[i++] = *(*ibufpp)++;
         }
-      else if( !shcmd || ( traditional() && !*( shcmd + 1 ) ) )
+      else if( !shcmd )
         { set_error_msg( "No previous command" ); return 0; }
       else
         {
@@ -180,7 +180,7 @@ static const char * get_filename( const char ** const ibufpp )
     else if( size > pmax )
       { set_error_msg( "Filename too long" ); return 0; }
     }
-  else if( !traditional() && !def_filename[0] )
+  else if( !def_filename[0] )
     { set_error_msg( "No current filename" ); return 0; }
   if( !resize_buffer( &buf, &bufsz, pmax + 1 ) ) return 0;
   for( n = 0; **ibufpp != '\n'; ++n, ++*ibufpp ) buf[n] = **ibufpp;
@@ -288,8 +288,6 @@ static bool get_third_addr( const char ** const ibufpp, int * const addr )
   int addr_cnt = extract_addr_range( ibufpp );
 
   if( addr_cnt < 0 ) return false;
-  if( traditional() && addr_cnt == 0 )
-    { set_error_msg( "Destination expected" ); return false; }
   if( second_addr < 0 || second_addr > last_addr() )
     { invalid_address(); return false; }
   *addr = second_addr;
@@ -464,8 +462,6 @@ static int exec_command( const char ** const ibufpp, const int prev_status,
                   !close_sbuf() ) return ERR;
               if( !open_sbuf() ) return FATAL;
               if( fnp[0] && fnp[0] != '!' ) set_def_filename( fnp );
-              if( traditional() && !fnp[0] && !def_filename[0] )
-                { set_error_msg( "No current filename" ); return ERR; }
               if( read_file( fnp[0] ? fnp : def_filename, 0 ) < 0 )
                 return ERR;
               reset_undo_state(); set_modified( false );
@@ -561,8 +557,6 @@ static int exec_command( const char ** const ibufpp, const int prev_status,
               if( !fnp ) return ERR;
               if( !isglobal ) clear_undo_stack();
               if( !def_filename[0] && fnp[0] != '!' ) set_def_filename( fnp );
-              if( traditional() && !fnp[0] && !def_filename[0] )
-                { set_error_msg( "No current filename" ); return ERR; }
               addr = read_file( fnp[0] ? fnp : def_filename, second_addr );
               if( addr < 0 ) return ERR;
               if( addr ) set_modified( true );
@@ -591,8 +585,6 @@ static int exec_command( const char ** const ibufpp, const int prev_status,
               else if( !check_addr_range( 1, last_addr(), addr_cnt ) )
                 return ERR;
               if( !def_filename[0] && fnp[0] != '!' ) set_def_filename( fnp );
-              if( traditional() && !fnp[0] && !def_filename[0] )
-                { set_error_msg( "No current filename" ); return ERR; }
               addr = write_file( fnp[0] ? fnp : def_filename,
                      ( c == 'W' ) ? "a" : "w", first_addr, second_addr );
               if( addr < 0 ) return ERR;
@@ -613,7 +605,7 @@ static int exec_command( const char ** const ibufpp, const int prev_status,
               break;
     case 'z': first_addr = 1;
               if( !check_addr_range( first_addr, current_addr() +
-                                     ( traditional() || !isglobal ), addr_cnt ) )
+                                     ( !isglobal ), addr_cnt ) )
                 return ERR;
               if( **ibufpp > '0' && **ibufpp <= '9' )
                 { if( parse_int( &n, *ibufpp, ibufpp ) ) set_window_lines( n );
@@ -642,7 +634,7 @@ static int exec_command( const char ** const ibufpp, const int prev_status,
 		}
 		first_addr = 1;
               if( !check_addr_range( first_addr, current_addr() +
-                                     ( traditional() || !isglobal ), addr_cnt ) ||
+                                     ( !isglobal ), addr_cnt ) ||
                   !display_lines( second_addr, second_addr, 0 ) )
                 return ERR;
               break;
@@ -667,13 +659,8 @@ static bool exec_global( const char ** const ibufpp, const int gflags,
 
   if( !interactive )
     {
-    if( traditional() && !strcmp( *ibufpp, "\n" ) )
-      cmd = "p\n";			/* null cmd_list == 'p' */
-    else
-      {
       if( !get_extended_line( ibufpp, 0, false ) ) return false;
       cmd = *ibufpp;
-      }
     }
   clear_undo_stack();
   while( true )

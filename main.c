@@ -42,20 +42,16 @@
 #include "ed.h"
 
 
-static const char * const Program_name = "GNU Ed";
+static const char * const Program_name = "GNU Ed (Oren's Mod)";
 static const char * const program_name = "ed";
 static const char * const program_year = "2015";
 static const char * invocation_name = 0;
 
 static bool restricted_ = false;	/* if set, run in restricted mode */
 static bool scripted_ = false;		/* if set, suppress diagnostics */
-static bool traditional_ = false;	/* if set, be backwards compatible */
-
 
 bool restricted( void ) { return restricted_; }
 bool scripted( void ) { return scripted_; }
-bool traditional( void ) { return traditional_; }
-
 
 static void show_help( void )
   {
@@ -64,12 +60,12 @@ static void show_help( void )
   printf( "\nOptions:\n"
           "  -h, --help                 display this help and exit\n"
           "  -V, --version              output version information and exit\n"
-          "  -G, --traditional          run in compatibility mode\n"
           "  -l, --loose-exit-status    exit with 0 status even if a command fails\n"
           "  -p, --prompt=STRING        use STRING as an interactive prompt\n"
           "  -r, --restricted           run in restricted mode\n"
           "  -s, --quiet, --silent      suppress diagnostics\n"
           "  -v, --verbose              be verbose\n"
+          "  -F program			use program to format output\n"
           "Start edit by reading in 'file' if given.\n"
           "If 'file' begins with a '!', read output of shell command.\n"
           "\nExit status: 0 for a normal exit, 1 for environmental problems (file\n"
@@ -144,7 +140,6 @@ int main( const int argc, const char * const argv[] )
   bool loose = false;
   const struct ap_Option options[] =
     {
-    { 'G', "traditional",       ap_no  },
     { 'h', "help",              ap_no  },
     { 'l', "loose-exit-status", ap_no  },
     { 'p', "prompt",            ap_yes },
@@ -171,7 +166,6 @@ int main( const int argc, const char * const argv[] )
     if( !code ) break;					/* no more options */
     switch( code )
       {
-      case 'G': traditional_ = true; break;	/* backward compatibility */
       case 'h': show_help(); return 0;
       case 'l': loose = true; break;
       case 'F': set_highlighter(arg); break;

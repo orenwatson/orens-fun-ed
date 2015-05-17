@@ -57,7 +57,7 @@ static void put_tty_line( const char * p, int len, const int gflags)
         }
       }
     }
-  if( !traditional() && ( gflags & GLS ) ) putchar('$');
+  if( gflags & GLS ) putchar('$');
   putchar('\n');
   }
 
