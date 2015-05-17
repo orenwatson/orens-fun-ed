@@ -30,7 +30,7 @@ enum Status { QUIT = -1, ERR = -2, EMOD = -3, FATAL = -4 };
 
 static char def_filename[1024] = "";	/* default filename */
 static char errmsg[80] = "";		/* error message buffer */
-static char prompt_str[80] = "\e[31m> \e[0m";	/* command prompt */
+static char prompt_str[80] = "\e[1;36m* \e[0m";	/* command prompt */
 static int first_addr = 0, second_addr = 0;
 static bool prompt_on = true;		/* if set, show command prompt */
 static bool verbose = true;		/* if set, print all error messages */
