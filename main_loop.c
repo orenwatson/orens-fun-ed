@@ -30,10 +30,9 @@ enum Status { QUIT = -1, ERR = -2, EMOD = -3, FATAL = -4 };
 
 static char def_filename[1024] = "";	/* default filename */
 static char errmsg[80] = "";		/* error message buffer */
-static char prompt_str[80] = "\e[1;36m* \e[0m";	/* command prompt */
+char prompt_str[80] = "\e[1;36m* \e[0m";	/* command prompt */
 static int first_addr = 0, second_addr = 0;
-static bool prompt_on = true;		/* if set, show command prompt */
-static bool verbose = true;		/* if set, print all error messages */
+static bool prompt_on = true;		/* if set, show command prompt */static bool verbose = true;		/* if set, print all error messages */
 int promptlen = 2;			/* prompt visible length */
 
 void set_def_filename( const char * const s )
@@ -104,7 +103,11 @@ static const char * get_shell_command( const char ** const ibufpp )
   int i = 0, len;
 
   if( restricted() ) { set_error_msg( "Shell access restricted" ); return 0; }
-  if( !get_extended_line( ibufpp, &len, true ) ) return 0;
+    if(hy_interaction){
+	if( !get_extended_line_hyi( ibufpp, &len, true,"\e[1;36m! \e[0m") ) return 0;
+    }else{
+	if( !get_extended_line( ibufpp, &len, true ) ) return 0;
+    }
   p = *ibufpp;
   if( !resize_buffer( &buf, &bufsz, len + 1 ) ) return 0;
   buf[i++] = '!';			/* prefix command w/ bang */
@@ -168,10 +171,13 @@ static const char * get_filename( const char ** const ibufpp )
   int n;
 
   *ibufpp = skip_blanks( *ibufpp );
-  if( **ibufpp != '\n' )
-    {
+  if( **ibufpp != '\n'){
     int size = 0;
-    if( !get_extended_line( ibufpp, &size, true ) ) return 0;
+    if(hy_interaction){
+	if( !get_extended_line_hyi( ibufpp, &size, true,"\e[36;1m: \e[0m") ) return 0;
+    }else{
+	if( !get_extended_line( ibufpp, &size, true ) ) return 0;
+    }
     if( **ibufpp == '!' )
       {
       ++*ibufpp;
@@ -659,7 +665,11 @@ static bool exec_global( const char ** const ibufpp, const int gflags,
 
   if( !interactive )
     {
-      if( !get_extended_line( ibufpp, 0, false ) ) return false;
+    if(hy_interaction){
+	if( !get_extended_line_hyi( ibufpp, 0, false, "\e[36;1mG \e[0m") ) return false;
+    }else{
+	if( !get_extended_line( ibufpp, 0, false ) ) return false;
+    }
       cmd = *ibufpp;
     }
   clear_undo_stack();
@@ -721,7 +731,7 @@ int main_loop( const bool loose )
 	if(!hy_interaction){
 		ibufp = get_tty_line( &len );
 	}else{
-		ibufp = get_hyi_line( &len,prompt_on?prompt_str:"");
+		ibufp = get_hyi_line( &len,0);
 	}
     if( !ibufp ) return err_status;
     if( !len )

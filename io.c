@@ -111,8 +111,7 @@ bool display_lines( int from, const int to, const int gflags )
 
 
 /* return the parity of escapes at the end of a string */
-static bool trailing_escape( const char * const s, int len )
-  {
+static bool trailing_escape( const char * const s, int len )  {
   bool odd_escape = false;
   while( --len >= 0 && s[len] == '\\' ) odd_escape = !odd_escape;
   return odd_escape;
@@ -373,16 +372,16 @@ char * get_hyi_line(int *const sizep,char const *prompt){
 	tcsetattr(0,TCSADRAIN,&S);
 	int i = 0; /*cursor pos*/
 	int z = 0; /*size of string*/
-	int zz = 0; /*buffer size*/
+	static int zz = 0; /*buffer size*/
 	int esc = 0;
-	char *s = 0;;
+	static char *s = 0;;
+	if(s)*s=0;
 	while(1){
 		int c = getchar();
-		reparse:
 		if(esc==2){
 			if(c=='C'){if(i<z){ i++; esc=0; }}
 			else if(c=='D'){if(0<i){ i--; esc=0; }}
-			else{ esc=0; goto reparse; }
+			else{ esc=0; continue; }
 		}else if(c=='['&&esc==1)esc=2;
 		else if(c=='\33')esc=1;
 		else if(esc==0){
@@ -402,7 +401,7 @@ char * get_hyi_line(int *const sizep,char const *prompt){
 			i++;
 		}
 		}
-		printf("\e[2K\e[0G%s%s",prompt?prompt:"",s);
+		printf("\e[2K\e[0G%s%s",prompt?:prompt_str,s);
 		if(z!=i)printf("\e[%dD",z-i);
 		fflush(stdout);
 		if(c=='\n')break;
@@ -410,4 +409,100 @@ char * get_hyi_line(int *const sizep,char const *prompt){
 	if(sizep)*sizep=z;
 	tcsetattr(0,TCSADRAIN,&T);
 	return s;
+}
+
+/* If *ibufpp contains an escaped newline, get an extended line (one
+   with escaped newlines) from stdin */
+bool get_extended_line_hyi( const char ** const ibufpp, int * const lenp,
+                        const bool strip_escaped_newlines,
+			const char* sub_prompt){
+	static char * s = 0;
+	static int zz = 0;
+	int z;
+	int lines=1;
+	for( z = 0; (*ibufpp)[z++] != '\n'; ) ;
+	if( z < 2 || !trailing_escape( *ibufpp, z - 1 ) )
+		{ if( lenp ) *lenp = z; return true; }
+	struct termios S,T;
+	if(tcgetattr(0,&S)){
+		hy_interaction = false;
+		return get_extended_line(ibufpp,lenp,strip_escaped_newlines);
+	}
+	T = S;
+	S.c_lflag = ISIG;
+	tcsetattr(0,TCSADRAIN,&S);
+	if( !resize_buffer( &s, &zz, z ) ) return false;
+	memcpy( s, *ibufpp, z );
+	int esc=0,i=z;
+	int hh=0;
+	while(1){
+		int c = getchar();
+		int submit=0;
+		reparse:
+		if(esc==2){
+			if(c=='C'){if(i<z){ i++; esc=0; }}
+			else if(c=='D'){if(0<i){ i--; esc=0; }}
+			else{ esc=0; goto reparse; }
+		}else if(c=='['&&esc==1)esc=2;
+		else if(c=='\33')esc=1;
+		else if(esc==0){
+		if((c==0x7f||c=='\b')&&i>0){
+			if(s[i-1]=='\n')lines--;
+			memmove(s+i-1,s+i,z-i);
+			z--;
+			s[z]=0;
+			i--;
+		}else{
+			if(c=='\n'){
+				if(i==z)submit=1;
+				else lines++;
+			}
+			else if(c<' '||c==0x7f)continue;
+			resize_buffer(&s,&zz,z+2);
+			memmove(s+i+1,s+i,z-i);
+			 s[i]=c;
+			z++;
+			s[z]=0;
+			i++;
+		}
+		}
+		if(lines-hh)printf("\e[%dF",lines-hh);
+		else printf("\e[0G");;
+		printf("\e[J%s%s",sub_prompt?:prompt_str,s);
+		fflush(stdout);
+		if(submit){
+			if(!trailing_escape(s,z-1))break;
+			else lines++;
+		}
+		int k=0,j=z,h=0;
+		while(j!=i){
+			if(s[j]=='\n'){h++;}
+			j--;
+		}
+		if(s[j]=='\n')h++;
+		j--;
+		while(j!=-1&&s[j]!='\n'){k++;j--;}
+		if(j==-1)k+=2;
+		if(h)printf("\e[%dF",h);
+		else printf("\e[0G");
+		if(k)printf("\e[%dC",k);
+		hh=h;
+	}
+	int j,k;
+	i=0,j=0,k=0;
+	while(s[i]!=0){
+		if(s[i]=='\n'&&i!=z-1){
+			j--;
+			if(!strip_escaped_newlines)s[j]='\n',j++;
+			i++;
+		}else{
+			s[j]=s[i];
+			i++;j++;
+		}
+	}
+	s[j]=0;
+	*ibufpp = s;
+  	if( lenp ) *lenp = z;
+	tcsetattr(0,TCSADRAIN,&T);
+	return true;
 }

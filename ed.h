@@ -156,7 +156,10 @@ bool set_highlighter(const char *);
 void mywrite(int fildes, const char*buf,size_t n);
 
 extern bool hy_interaction;
-char * get_hyi_line(int *const sizep,char const *prompt);
+char * get_hyi_line(int *const sizep,char const *prompt_extension);
+bool get_extended_line_hyi( const char ** const ibufpp, int * const lenp,
+                        const bool strip_escaped_newlines,
+			char const *sub_prompt);
 
 /*deified in main_loop.c*/
-extern int promptlen;
+extern char prompt_str[80];

@@ -149,6 +149,8 @@ int main( const int argc, const char * const argv[] )
     { 's', "silent",            ap_no  },
     { 'v', "verbose",           ap_no  },
     { 'V', "version",           ap_no  },
+    { 'I', "hyinteraction",  ap_no },
+    { 'i', "lointeraction",  ap_no },
     {  0 ,  0,                  ap_no } };
 
   struct Arg_parser parser;
@@ -172,6 +174,8 @@ int main( const int argc, const char * const argv[] )
       case 'p': set_prompt( arg ); break;
       case 'r': restricted_ = true; break;
       case 's': scripted_ = true; break;
+      case 'I': hy_interaction = true; break;
+      case 'i': hy_interaction = false; break;
       case 'v': set_verbose(); break;
       case 'V': show_version(); return 0;
       default : show_error( "internal error: uncaught option.", 0, false );
