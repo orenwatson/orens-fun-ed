@@ -372,20 +372,21 @@ char * get_hyi_line(int *const sizep,char const *prompt){
 	tcsetattr(0,TCSADRAIN,&S);
 	int i = 0; /*cursor pos*/
 	int z = 0; /*size of string*/
-	static int zz = 0; /*buffer size*/
+	static int zz = 1; /*buffer size*/
 	int esc = 0;
-	static char *s = 0;;
-	if(s)*s=0;
+	static char *s = 0;
+	if(!s)s=malloc(1);
+	*s=0;
 	while(1){
 		int c = getchar();
 		if(esc==2){
-			if(c=='C'){if(i<z){ i++; esc=0; }}
-			else if(c=='D'){if(0<i){ i--; esc=0; }}
-			else{ esc=0; continue; }
+			if(c=='C'){if(i<z){i++;}}
+			else if(c=='D'){if(0<i){i--;}}
+			esc=0;
 		}else if(c=='['&&esc==1)esc=2;
-		else if(c=='\33')esc=1;
 		else if(esc==0){
-		if((c==0x7f||c=='\b')&&i>0){
+		if(c=='\33')esc=1;
+		else if((c==0x7f||c=='\b')&&i>0){
 			memmove(s+i-1,s+i,z-i);
 			z--;
 			s[z]=0;
@@ -440,9 +441,9 @@ bool get_extended_line_hyi( const char ** const ibufpp, int * const lenp,
 		int submit=0;
 		reparse:
 		if(esc==2){
-			if(c=='C'){if(i<z){ i++; esc=0; }}
-			else if(c=='D'){if(0<i){ i--; esc=0; }}
-			else{ esc=0; goto reparse; }
+			if(c=='C'){if(i<z){ i++;}}
+			else if(c=='D'){if(0<i){ i--;}}
+			esc=0;
 		}else if(c=='['&&esc==1)esc=2;
 		else if(c=='\33')esc=1;
 		else if(esc==0){
