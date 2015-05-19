@@ -361,7 +361,7 @@ int write_file( const char * const filename, const char * const mode,
 
 bool hy_interaction=true;
 
-char * get_hyi_line(int *const sizep,char const *prompt){
+const char * get_hyi_line(int *const sizep,char const *prompt){
 	struct termios S,T;
 	if(tcgetattr(0,&S)){
 		hy_interaction = false;
@@ -439,7 +439,6 @@ bool get_extended_line_hyi( const char ** const ibufpp, int * const lenp,
 	while(1){
 		int c = getchar();
 		int submit=0;
-		reparse:
 		if(esc==2){
 			if(c=='C'){if(i<z){ i++;}}
 			else if(c=='D'){if(0<i){ i--;}}
@@ -456,7 +455,8 @@ bool get_extended_line_hyi( const char ** const ibufpp, int * const lenp,
 		}else{
 			if(c=='\n'){
 				if(i==z)submit=1;
-				else lines++;
+				else if(i>0 && s[i-1]=='\\')lines++;
+				else continue;
 			}
 			else if(c<' '||c==0x7f)continue;
 			resize_buffer(&s,&zz,z+2);
@@ -489,8 +489,8 @@ bool get_extended_line_hyi( const char ** const ibufpp, int * const lenp,
 		if(k)printf("\e[%dC",k);
 		hh=h;
 	}
-	int j,k;
-	i=0,j=0,k=0;
+	int j;
+	i=0,j=0;
 	while(s[i]!=0){
 		if(s[i]=='\n'&&i!=z-1){
 			j--;
@@ -507,3 +507,4 @@ bool get_extended_line_hyi( const char ** const ibufpp, int * const lenp,
 	tcsetattr(0,TCSADRAIN,&T);
 	return true;
 }
+

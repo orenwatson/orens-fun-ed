@@ -436,7 +436,7 @@ static int exec_command( const char ** const ibufpp, const int prev_status,
     {
     case 'a': if( !get_command_suffix( ibufpp, &gflags ) ) return ERR;
               if( !isglobal ) clear_undo_stack();
-              if( !append_lines( ibufpp, second_addr, isglobal ) ) return ERR;
+              if( !append_lines_hyi( ibufpp, second_addr, isglobal ) ) return ERR;
               break;
     case 'C': /* change directory command, added by Oren Watson */
               if(unexpected_address(addr_cnt)) return ERR;
@@ -451,7 +451,7 @@ static int exec_command( const char ** const ibufpp, const int prev_status,
                   !get_command_suffix( ibufpp, &gflags ) ) return ERR;
               if( !isglobal ) clear_undo_stack();
               if( !delete_lines( first_addr, second_addr, isglobal ) ||
-                  !append_lines( ibufpp, current_addr(), isglobal ) ) return ERR;
+                  !append_lines_hyi( ibufpp, current_addr(), isglobal ) ) return ERR;
               break;
     case 'd': if( !check_current_addr( addr_cnt ) ||
                   !get_command_suffix( ibufpp, &gflags ) ) return ERR;
@@ -511,7 +511,7 @@ static int exec_command( const char ** const ibufpp, const int prev_status,
     case 'i': if( second_addr == 0 ) second_addr = 1;
               if( !get_command_suffix( ibufpp, &gflags ) ) return ERR;
               if( !isglobal ) clear_undo_stack();
-              if( !append_lines( ibufpp, second_addr - 1, isglobal ) )
+              if( !append_lines_hyi( ibufpp, second_addr - 1, isglobal ) )
                 return ERR;
               break;
     case 'I':   /*enables line editing*/

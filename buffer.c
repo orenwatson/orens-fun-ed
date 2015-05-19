@@ -25,6 +25,8 @@
 #include <unistd.h>
 #include <sys/file.h>
 #include <sys/stat.h>
+#include <sys/wait.h>
+#include <termios.h>
 
 #include "ed.h"
 
@@ -643,4 +645,116 @@ bool undo( const bool isglobal )
   modified_ = u_modified; u_modified = o_modified;
   enable_interrupts();
   return true;
+  }
+
+/* Insert text from stdin  to after
+   line n; stop when either a single period is read or EOF.
+   Returns false if insertion fails. */
+bool append_lines_hyi( const char ** const ibufpp, const int addr,
+                   const bool isglobal )
+  {
+	if(!hy_interaction || isglobal)
+		return append_lines(ibufpp,addr,isglobal);
+	current_addr_ = addr;
+	int start_addr = addr;
+    	/*CUT*/
+	static char * s = 0;
+	static int zz = 0;
+	int z=0;
+	int lines=0;
+	struct termios S,T;
+	if( tcgetattr(0,&S)){
+		hy_interaction = false;
+		return append_lines(ibufpp,addr,isglobal);
+	}
+	T = S;
+	S.c_lflag = ISIG;
+	tcsetattr(0,TCSADRAIN,&S);
+	if( !resize_buffer( &s, &zz, 1 ) )goto retfalse;
+	s[0]=0;
+	int esc=0,i=z,k;
+	int hh=0;
+	while(1){
+		int c = getchar();
+		int submit=0;
+		if(esc==2){
+			if(c=='C'){if(i<z){ i++;}}
+			else if(c=='D'){if(0<i){ i--;}}
+			esc=0;
+		}else if(c=='['&&esc==1)esc=2;
+		else if(c=='\33')esc=1;
+		else if(esc==0){
+		if((c==0x7f||c=='\b')&&i>0){
+			if(s[i-1]=='\n')lines--;
+			memmove(s+i-1,s+i,z-i);
+			z--;
+			s[z]=0;
+			i--;
+		}else{
+			if(c=='\n'){
+				if(i==z) submit=1;
+				else lines++;
+			}
+			else if(c<' '||c==0x7f)continue;
+			resize_buffer(&s,&zz,z+2);
+			memmove(s+i+1,s+i,z-i);
+			 s[i]=c;
+			z++;
+			s[z]=0;
+			i++;
+		}
+		}
+		if(lines-hh)printf("\e[%dF",lines-hh);
+		else printf("\e[0G");;
+		printf("\e[J");;
+		fflush(stdout);
+		if(highlighter){
+			write(1,"\033[A",3);
+			fflush(stdout);
+			int tohl_fd[2];
+			pipe(tohl_fd);
+			if(fork()){
+				close(tohl_fd[0]);
+			}else{
+				close(tohl_fd[1]);
+				dup2(tohl_fd[0],0);
+				execl(highlighter,highlighter,NULL);
+			}
+			write(tohl_fd[1],s,z);
+			close(tohl_fd[1]);
+			wait(NULL);
+		}else printf("%s",s);
+		if(submit){
+			if(s[i-2]=='.'&&(i-2==0||s[i-3]=='\n'))break;
+			else lines++;
+		}
+		int k=0,j=z,h=0;
+		while(j!=i){
+			if(s[j]=='\n'){h++;}
+			j--;
+		}
+		if(s[j]=='\n')h++;
+		j--;
+		while(j!=-1&&s[j]!='\n'){k++;j--;}
+		if(h)printf("\e[%dF",h);
+		else printf("\e[0G");
+		if(k)printf("\e[%dC",k);
+		hh=h;
+	}
+	i=0,k=0;
+	while(1){
+		while(s[k]!='\n')k++;
+		k++;
+		if(s[k]==0)break;
+		if( !put_sbuf_line( s+i, k-i, current_addr_ ) )
+		 	goto retfalse;
+		i=k;
+	}
+	push_undo_atom( UADD, start_addr, current_addr_ );
+	modified_ = true;
+	tcsetattr(0,TCSADRAIN,&T);
+	return true;
+	retfalse:
+	tcsetattr(0,TCSADRAIN,&T);
+	return false;
   }

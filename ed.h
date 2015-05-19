@@ -61,6 +61,8 @@ undo_t;
 /* defined in buffer.c */
 bool append_lines( const char ** const ibufpp, const int addr,
                    const bool isglobal );
+bool append_lines_hyi( const char ** const ibufpp, const int addr,
+                   const bool isglobal );
 bool close_sbuf( void );
 bool copy_lines( const int first_addr, const int second_addr, const int addr );
 int current_addr( void );
@@ -108,6 +110,11 @@ const char * get_tty_line( int * const sizep );
 int read_file( const char * const filename, const int addr );
 int write_file( const char * const filename, const char * const mode,
                 const int from, const int to );
+extern bool hy_interaction;
+const char * get_hyi_line(int *const sizep,char const *prompt_extension);
+bool get_extended_line_hyi( const char ** const ibufpp, int * const lenp,
+                        const bool strip_escaped_newlines,
+			char const *sub_prompt);
 
 /* defined in main.c */
 bool is_regular_file( const int fd );
@@ -155,11 +162,6 @@ extern char * highlighter;
 bool set_highlighter(const char *);
 void mywrite(int fildes, const char*buf,size_t n);
 
-extern bool hy_interaction;
-char * get_hyi_line(int *const sizep,char const *prompt_extension);
-bool get_extended_line_hyi( const char ** const ibufpp, int * const lenp,
-                        const bool strip_escaped_newlines,
-			char const *sub_prompt);
 
 /*deified in main_loop.c*/
 extern char prompt_str[80];
